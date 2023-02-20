@@ -32,7 +32,7 @@ export class SuccessCallbackExecution extends sfn.StateMachine {
       iamResources: [successCallbackExecutionProps.tokenTable.tableArn]
     })
 
-    const sendTaskSuccess = new tasks.CallAwsService(scope, 'SendTaskSuccessToken', {
+    const sendTaskSuccess = new tasks.CallAwsService(scope, 'SendTaskSuccess', {
       service: 'sfn',
       action: 'sendTaskSuccess',
       parameters: {
