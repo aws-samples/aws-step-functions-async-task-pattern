@@ -28,7 +28,7 @@ To deploy this stack to your default AWS account/region, run:
 cdk deploy
 ```
 
-# Solution Implementation
+# Key Components of the Solution
 
 Deployment creates following resources in your AWS account:
 
@@ -53,6 +53,42 @@ The nested workflow `${stackName}-call-job` starts the AppFlow flow with the sta
 
 ## Success Callback AWS Step Functions Workflow
 After successful job completion, an event is sent to Amazon EventBridge. EventBridge routes the event with the execution ID and the status of the job to this workflow `${stackName}-callback`. It fetches the corresponding task token given the execution ID from the DynamoDB table and returns it to AWS Step Functions. 
+
+# Implementation
+
+One key construct in this solution implementation is the `AsyncTask` CDK construct. 
+It can be used in any primary workflow that needs to implement the proposed pattern. This construct automatically creates the nested workflow along with the EventBridge rules for the callback. 
+
+```
+new AsyncTask(this, 'StartAsyncJobWorkflow', {
+    tokenTable,
+    state: startFlow,
+    callServiceExecutionIdPath: '$.ExecutionId',
+    successEventPattern: {
+        source: ['aws.appflow'],
+        detailType: ['AppFlow End Flow Run Report'],
+        detail: {
+        status: ['Execution Successful']
+        }
+    },
+    failureEventPattern: {
+        source: ['aws.appflow'],
+        detailType: ['AppFlow End Flow Run Report'],
+        detail: {
+        status: [{ 'anything-but': 'Execution Successful' }]
+        }
+    },
+    eventExecutionIdPath: '$.detail.execution-id'
+    }
+```
+
+- `tokenTable`: The DynamoDB table that holds the execution ID and the task token.
+- `state`: The actual service task that needs the be called. This step is then encapsulated into an distinct nested workflow by this construct. 
+- `callServiceExecutionIdPath`: The [JSONPath](https://github.com/json-path/JsonPath) that specifies the execution ID location in the job submission response. This is used to extract the execution ID for later storage. 
+- `successEventPattern`: The [event pattern](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html) describing the job completion state. This is used to create a EventBridge rule. 
+- `failureEventPattern`:  The [event pattern](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html) describing the job failed state. This is used to create a EventBridge rule.
+- `eventExecutionIdPath`: The [JSONPath](https://github.com/json-path/JsonPath) that specifies the execution ID location in the job completion event. 
+
 
 # Cleanup
 
