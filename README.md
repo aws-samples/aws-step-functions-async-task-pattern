@@ -20,11 +20,19 @@ This project shows a solution that starts a long running job and then listens to
 - AWS [CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) installed and setup
 - AWS environment [bootstrapped](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) for CDK deployment
 
+## Setup
+To install required dependencies, run
+
+```
+npm install
+```
+
 ## Deployment 
 
 To deploy this stack to your default AWS account/region, run:
 
 ```
+npm install
 cdk deploy
 ```
 
